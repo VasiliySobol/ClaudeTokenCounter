@@ -59,7 +59,7 @@ while (true)
 
             var response = await client.Messages.CountTokens(parameters);
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine(response);
+            Console.WriteLine($"Input tokens: {response.InputTokens}");
             break;
 
         case "2":
