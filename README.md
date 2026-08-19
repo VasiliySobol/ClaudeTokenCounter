@@ -13,7 +13,7 @@ A small .NET 9 console app that counts input tokens for text messages using the 
 
 Choose one of the following methods:
 
-**Option 1 — .NET User Secrets (recommended, not committed to git):**
+**Option 1 — .NET User Secrets (recommended):**
 ```powershell
 dotnet user-secrets set "Anthropic:ApiKey" "sk-ant-api..." --project ClaudeTokenCounter/ClaudeTokenCounter.csproj
 ```
