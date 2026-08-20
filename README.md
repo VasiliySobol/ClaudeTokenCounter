@@ -34,8 +34,9 @@ dotnet run --project ClaudeTokenCounter/ClaudeTokenCounter.csproj
 Once started, the app shows an interactive menu:
 
 ```
-1 - Enter text to count tokens
-2 - Exit
+1 - Count input tokens
+2 - Count output tokens (sends a real request)
+3 - Exit
 ```
 
-Press `1`, paste or type your text, and hit Enter — the token count will be displayed. Press `2` to quit.
+Press `1` to count input tokens without sending a real request. Press `2` to count output tokens — this sends an actual API request and will consume credits. Press `3` to quit.
