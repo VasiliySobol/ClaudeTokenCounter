@@ -1,6 +1,6 @@
 # ClaudeTokenCounter
 
-A small .NET 9 console app that counts input tokens for text messages using the Anthropic API.
+A small .NET 9 console app that counts input and output tokens in text messages using the Anthropic API.
 
 **Author:** Vasyl Sobol
 
