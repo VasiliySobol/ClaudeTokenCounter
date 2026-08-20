@@ -32,7 +32,7 @@ Single-file console app (`ClaudeTokenCounter/Program.cs`) using top-level statem
 
 - Reads the API key from .NET user secrets (`Microsoft.Extensions.Configuration.UserSecrets`) or `ANTHROPIC_API_KEY` env var
 - Creates one `AnthropicClient` instance for the lifetime of the process
-- Runs a menu loop: **1** calls `client.Messages.CountTokens()` with the user-supplied text against `Model.ClaudeOpus5`, **2** exits
+- Runs a menu loop: **1** calls `client.Messages.CountTokens()` with the user-supplied text against `Model.ClaudeOpus5`, **2** calls `client.Messages.Create()` and reads `Usage.OutputTokens` from the response, **3** exits
 - Token count response is printed directly from the API result object
 
 ## Key Dependencies
