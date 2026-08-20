@@ -37,8 +37,9 @@ while (true)
 {
     Console.ForegroundColor = ConsoleColor.Cyan;
     Console.WriteLine();
-    Console.WriteLine("1 - Enter text to count tokens");
-    Console.WriteLine("2 - Exit");
+    Console.WriteLine("1 - Count input tokens");
+    Console.WriteLine("2 - Count output tokens (sends a real request)");
+    Console.WriteLine("3 - Exit");
 
     Console.ForegroundColor = ConsoleColor.White;
     Console.Write("> ");
@@ -51,23 +52,40 @@ while (true)
             Console.WriteLine("Enter your text:");
             var textContentToCount = Console.ReadLine() ?? string.Empty;
 
-            var parameters = new MessageCountTokensParams
+            var countParams = new MessageCountTokensParams
             {
                 Model = Model.ClaudeOpus5,
                 Messages = [new() { Role = Role.User, Content = textContentToCount }]
             };
 
-            var response = await client.Messages.CountTokens(parameters);
+            var countResponse = await client.Messages.CountTokens(countParams);
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"Input tokens: {response.InputTokens}");
+            Console.WriteLine($"Input tokens: {countResponse.InputTokens}");
             break;
 
         case "2":
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("Enter your text:");
+            var textContentToSend = Console.ReadLine() ?? string.Empty;
+
+            var messageParams = new MessageCreateParams
+            {
+                Model = Model.ClaudeOpus5,
+                MaxTokens = 8096,
+                Messages = [new() { Role = Role.User, Content = textContentToSend }]
+            };
+
+            var messageResponse = await client.Messages.Create(messageParams);
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Output tokens: {messageResponse.Usage.OutputTokens}");
+            break;
+
+        case "3":
             return;
 
         default:
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Invalid choice. Please enter 1 or 2.");
+            Console.WriteLine("Invalid choice. Please enter 1, 2, or 3.");
             break;
     }
 }
