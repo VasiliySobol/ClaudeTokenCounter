@@ -1,5 +1,8 @@
 using System.Text;
+using System.Text.Json;
 using Anthropic;
+using Anthropic.Exceptions;
+using Anthropic.Models;
 using Anthropic.Models.Messages;
 using Microsoft.Extensions.Configuration;
 
@@ -45,47 +48,68 @@ while (true)
     Console.Write("> ");
     var choice = Console.ReadLine();
 
-    switch (choice)
+    try
     {
-        case "1":
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine("Enter your text:");
-            var textContentToCount = Console.ReadLine() ?? string.Empty;
+        switch (choice)
+        {
+            case "1":
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("Enter your text:");
+                var textContentToCount = Console.ReadLine() ?? string.Empty;
 
-            var countParams = new MessageCountTokensParams
-            {
-                Model = Model.ClaudeOpus5,
-                Messages = [new() { Role = Role.User, Content = textContentToCount }]
-            };
+                var countParams = new MessageCountTokensParams
+                {
+                    Model = Model.ClaudeOpus5,
+                    Messages = [new() { Role = Role.User, Content = textContentToCount }]
+                };
 
-            var countResponse = await client.Messages.CountTokens(countParams);
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"Input tokens: {countResponse.InputTokens}");
-            break;
+                var countResponse = await client.Messages.CountTokens(countParams);
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"Input tokens: {countResponse.InputTokens}");
+                break;
 
-        case "2":
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine("Enter your text:");
-            var textContentToSend = Console.ReadLine() ?? string.Empty;
+            case "2":
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("Enter your text:");
+                var textContentToSend = Console.ReadLine() ?? string.Empty;
 
-            var messageParams = new MessageCreateParams
-            {
-                Model = Model.ClaudeOpus5,
-                MaxTokens = 8096,
-                Messages = [new() { Role = Role.User, Content = textContentToSend }]
-            };
+                var messageParams = new MessageCreateParams
+                {
+                    Model = Model.ClaudeOpus5,
+                    MaxTokens = 8096,
+                    Messages = [new() { Role = Role.User, Content = textContentToSend }]
+                };
 
-            var messageResponse = await client.Messages.Create(messageParams);
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"Output tokens: {messageResponse.Usage.OutputTokens}");
-            break;
+                var messageResponse = await client.Messages.Create(messageParams);
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"Output tokens: {messageResponse.Usage.OutputTokens}");
+                break;
 
-        case "3":
-            return;
+            case "3":
+                return;
 
-        default:
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Invalid choice. Please enter 1, 2, or 3.");
-            break;
+            default:
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Invalid choice. Please enter 1, 2, or 3.");
+                break;
+        }
+    }
+    catch (AnthropicBadRequestException ex)
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine(GetApiErrorMessage(ex));
+    }
+}
+
+static string GetApiErrorMessage(AnthropicApiException ex)
+{
+    try
+    {
+        var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(ex.ResponseBody);
+        return errorResponse?.Error.Message ?? ex.Message;
+    }
+    catch (JsonException)
+    {
+        return ex.Message;
     }
 }
