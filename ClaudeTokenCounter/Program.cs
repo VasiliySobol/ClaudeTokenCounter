@@ -53,19 +53,7 @@ while (true)
         switch (choice)
         {
             case "1":
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine("Enter your text:");
-                var textContentToCount = Console.ReadLine() ?? string.Empty;
-
-                var countParams = new MessageCountTokensParams
-                {
-                    Model = Model.ClaudeOpus5,
-                    Messages = [new() { Role = Role.User, Content = textContentToCount }]
-                };
-
-                var countResponse = await client.Messages.CountTokens(countParams);
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"Input tokens: {countResponse.InputTokens}");
+                await RunCountInputTokensMenu();
                 break;
 
             case "2":
@@ -98,6 +86,136 @@ while (true)
     {
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine(GetApiErrorMessage(ex));
+    }
+}
+
+async Task RunCountInputTokensMenu()
+{
+    while (true)
+    {
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine();
+        Console.WriteLine("1 - Enter text directly");
+        Console.WriteLine("2 - Enter few texts from a file");
+        Console.WriteLine("3 - Return back");
+
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.Write("> ");
+        var subChoice = Console.ReadLine();
+
+        switch (subChoice)
+        {
+            case "1":
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("Enter your text:");
+                var text = Console.ReadLine() ?? string.Empty;
+                await CountInputTokens(text);
+                break;
+
+            case "2":
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("Enter path to the file:");
+                var path = Console.ReadLine() ?? string.Empty;
+
+                if (!File.Exists(path))
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"File not found: {path}");
+                    break;
+                }
+
+                var lines = await File.ReadAllLinesAsync(path);
+                var texts = new List<string>();
+                var tokenCounts = new List<long>();
+                foreach (var line in lines)
+                {
+                    if (string.IsNullOrWhiteSpace(line))
+                    {
+                        continue;
+                    }
+
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.WriteLine($"Text: {line}");
+                    texts.Add(line);
+                    tokenCounts.Add(await CountInputTokens(line));
+                    Console.WriteLine();
+                }
+
+                if (tokenCounts.Count > 0)
+                {
+                    var language = await DetectLanguage(texts);
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.WriteLine($"Texts language is {language}");
+
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    for (var i = 0; i < tokenCounts.Count; i++)
+                    {
+                        Console.WriteLine($"Input tokens for Text {i + 1}: {tokenCounts[i]}");
+                    }
+
+                    Console.WriteLine();
+                    var average = (int)Math.Round(tokenCounts.Average(), MidpointRounding.AwayFromZero);
+                    Console.WriteLine($"Average input tokens: {average}");
+                }
+
+                break;
+
+            case "3":
+                return;
+
+            default:
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Invalid choice. Please enter 1, 2, or 3.");
+                break;
+        }
+    }
+
+    async Task<long> CountInputTokens(string text)
+    {
+        var countParams = new MessageCountTokensParams
+        {
+            Model = Model.ClaudeOpus5,
+            Messages = [new() { Role = Role.User, Content = text }]
+        };
+
+        var countResponse = await client.Messages.CountTokens(countParams);
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"Input tokens: {countResponse.InputTokens}");
+        return countResponse.InputTokens;
+    }
+
+    async Task<string> DetectLanguage(IReadOnlyList<string> texts)
+    {
+        var prompt = new StringBuilder();
+        prompt.AppendLine("Identify the language of each of the following numbered texts.");
+        prompt.AppendLine("If all texts are written in the same language, respond with only the English name of that language (for example: English, Russian, Spanish) and nothing else.");
+        prompt.AppendLine("If the texts are written in different languages, respond with only the single word: Mixed");
+        prompt.AppendLine("Do not include any explanation, punctuation, or extra words.");
+        prompt.AppendLine();
+
+        for (var i = 0; i < texts.Count; i++)
+        {
+            prompt.AppendLine($"Text {i + 1}: {texts[i]}");
+        }
+
+        var languageParams = new MessageCreateParams
+        {
+            Model = Model.ClaudeOpus5,
+            MaxTokens = 20,
+            Thinking = new ThinkingConfigDisabled(),
+            Messages = [new() { Role = Role.User, Content = prompt.ToString() }]
+        };
+
+        var languageResponse = await client.Messages.Create(languageParams);
+        foreach (var block in languageResponse.Content)
+        {
+            if (block.TryPickText(out var textBlock))
+            {
+                return textBlock.Text.Trim();
+            }
+        }
+
+        return "Unknown";
     }
 }
 
