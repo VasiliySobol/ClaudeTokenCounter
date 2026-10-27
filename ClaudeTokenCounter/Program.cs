@@ -114,8 +114,12 @@ async Task RunCountInputTokensMenu()
 
             case "2":
                 Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine("Enter path to the file:");
-                var path = Console.ReadLine() ?? string.Empty;
+                var currentDirectory = Directory.GetCurrentDirectory();
+                var dataDirectory = Path.Combine(currentDirectory, "data");
+                var defaultPath = Directory.Exists(dataDirectory) ? dataDirectory : currentDirectory;
+                Console.WriteLine($"Enter path to the file [{defaultPath}]:");
+                var pathInput = Console.ReadLine();
+                var path = string.IsNullOrWhiteSpace(pathInput) ? defaultPath : pathInput;
 
                 if (!File.Exists(path))
                 {
