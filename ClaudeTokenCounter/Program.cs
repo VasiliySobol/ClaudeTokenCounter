@@ -118,8 +118,32 @@ async Task RunCountInputTokensMenu()
                 var dataDirectory = Path.Combine(currentDirectory, "data");
                 var defaultPath = Directory.Exists(dataDirectory) ? dataDirectory : currentDirectory;
                 Console.WriteLine($"Enter path to the file [{defaultPath}]:");
+
+                var txtFiles = Directory.Exists(defaultPath)
+                    ? Directory.GetFiles(defaultPath, "*.txt").OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToArray()
+                    : [];
+
+                if (txtFiles.Length > 0)
+                {
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    for (var i = 0; i < txtFiles.Length; i++)
+                    {
+                        Console.WriteLine($"{i + 1} - {Path.GetFileName(txtFiles[i])}");
+                    }
+
+                    Console.ForegroundColor = ConsoleColor.White;
+                }
+
                 var pathInput = Console.ReadLine();
-                var path = string.IsNullOrWhiteSpace(pathInput) ? defaultPath : pathInput;
+                string path;
+                if (int.TryParse(pathInput, out var fileChoice) && fileChoice >= 1 && fileChoice <= txtFiles.Length)
+                {
+                    path = txtFiles[fileChoice - 1];
+                }
+                else
+                {
+                    path = string.IsNullOrWhiteSpace(pathInput) ? defaultPath : pathInput;
+                }
 
                 if (!File.Exists(path))
                 {
