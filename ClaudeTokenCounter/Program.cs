@@ -219,6 +219,7 @@ async Task RunCountInputTokensMenu()
         {
             prompt.AppendLine("Identify the language of the following text.");
             prompt.AppendLine("Respond with only the English name of that language (for example: English, Russian, Spanish) and nothing else.");
+            prompt.AppendLine("If the text is in Chinese, respond with either \"Chinese (Simplified)\" or \"Chinese (Traditional)\" depending on the script used.");
             prompt.AppendLine("Do not include any explanation, punctuation, or extra words.");
             prompt.AppendLine();
             prompt.AppendLine(texts[0]);
@@ -227,6 +228,7 @@ async Task RunCountInputTokensMenu()
         {
             prompt.AppendLine("Identify the language of each of the following numbered texts.");
             prompt.AppendLine("If all texts are written in the same language, respond with only the English name of that language (for example: English, Russian, Spanish) and nothing else.");
+            prompt.AppendLine("If all texts are in Chinese, respond with either \"Chinese (Simplified)\" or \"Chinese (Traditional)\" depending on the script used; if the texts mix both scripts, treat them as different languages.");
             prompt.AppendLine("If the texts are written in different languages, respond with only the single word: Mixed");
             prompt.AppendLine("Do not include any explanation, punctuation, or extra words.");
             prompt.AppendLine();
@@ -248,7 +250,7 @@ async Task RunCountInputTokensMenu()
                     ["language"] = JsonSerializer.SerializeToElement(new
                     {
                         type = "string",
-                        description = "The English name of the language (for example: English, Russian, Spanish), or the single word Mixed if the texts are in different languages."
+                        description = "The English name of the language (for example: English, Russian, Spanish). For Chinese, use \"Chinese (Simplified)\" or \"Chinese (Traditional)\" depending on the script. Use the single word Mixed if the texts are in different languages (or mix Chinese scripts)."
                     })
                 },
                 Required = ["language"]
