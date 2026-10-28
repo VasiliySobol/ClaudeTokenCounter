@@ -215,31 +215,62 @@ async Task RunCountInputTokensMenu()
     async Task<string> DetectLanguage(IReadOnlyList<string> texts)
     {
         var prompt = new StringBuilder();
-        prompt.AppendLine("Identify the language of each of the following numbered texts.");
-        prompt.AppendLine("If all texts are written in the same language, respond with only the English name of that language (for example: English, Russian, Spanish) and nothing else.");
-        prompt.AppendLine("If the texts are written in different languages, respond with only the single word: Mixed");
-        prompt.AppendLine("Do not include any explanation, punctuation, or extra words.");
-        prompt.AppendLine();
-
-        for (var i = 0; i < texts.Count; i++)
+        if (texts.Count == 1)
         {
-            prompt.AppendLine($"Text {i + 1}: {texts[i]}");
+            prompt.AppendLine("Identify the language of the following text.");
+            prompt.AppendLine("Respond with only the English name of that language (for example: English, Russian, Spanish) and nothing else.");
+            prompt.AppendLine("Do not include any explanation, punctuation, or extra words.");
+            prompt.AppendLine();
+            prompt.AppendLine(texts[0]);
         }
+        else
+        {
+            prompt.AppendLine("Identify the language of each of the following numbered texts.");
+            prompt.AppendLine("If all texts are written in the same language, respond with only the English name of that language (for example: English, Russian, Spanish) and nothing else.");
+            prompt.AppendLine("If the texts are written in different languages, respond with only the single word: Mixed");
+            prompt.AppendLine("Do not include any explanation, punctuation, or extra words.");
+            prompt.AppendLine();
+
+            for (var i = 0; i < texts.Count; i++)
+            {
+                prompt.AppendLine($"Text {i + 1}: {texts[i]}");
+            }
+        }
+
+        var reportLanguageTool = new Tool
+        {
+            Name = "report_language",
+            Description = "Reports the detected language of the given text(s).",
+            InputSchema = new InputSchema
+            {
+                Properties = new Dictionary<string, JsonElement>
+                {
+                    ["language"] = JsonSerializer.SerializeToElement(new
+                    {
+                        type = "string",
+                        description = "The English name of the language (for example: English, Russian, Spanish), or the single word Mixed if the texts are in different languages."
+                    })
+                },
+                Required = ["language"]
+            }
+        };
 
         var languageParams = new MessageCreateParams
         {
             Model = Model.ClaudeOpus5,
-            MaxTokens = 20,
+            MaxTokens = 200,
             Thinking = new ThinkingConfigDisabled(),
+            Tools = [reportLanguageTool],
+            ToolChoice = new ToolChoiceTool("report_language"),
             Messages = [new() { Role = Role.User, Content = prompt.ToString() }]
         };
 
         var languageResponse = await client.Messages.Create(languageParams);
         foreach (var block in languageResponse.Content)
         {
-            if (block.TryPickText(out var textBlock))
+            if (block.TryPickToolUse(out var toolUse) && toolUse.Input.TryGetValue("language", out var languageValue))
             {
-                return textBlock.Text.Trim();
+                return languageValue.GetString() ?? "Unknown";
             }
         }
 
