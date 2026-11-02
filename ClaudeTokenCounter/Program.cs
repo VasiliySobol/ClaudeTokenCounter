@@ -96,7 +96,7 @@ async Task RunCountInputTokensMenu()
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine();
         Console.WriteLine("1 - Enter text directly");
-        Console.WriteLine("2 - Enter few texts from a file");
+        Console.WriteLine("2 - Read few texts from a file");
         Console.WriteLine("3 - Return back");
 
         Console.ForegroundColor = ConsoleColor.White;
